@@ -1,7 +1,7 @@
 
-## Wavelet-preprocessing-for-deep-fake-detection
+# Wavelet-preprocessing-for-deep-fake-detection
 
-本代码基于https://github.com/microsoft/Swin-Transformer
+本代码基于https://github.com/microsoft/Swin-Transformer 
 
 主要做了以下几点改动：
 
@@ -24,6 +24,9 @@ transform操作，同时改写了data/build.py中其中的数据IO，以便输�
 
 2.在使用小波分量的情况下准确率为99.828%,AUC为99.998%
 
+## clone apex
+
+进入wavelet_faceformer文件夹将apex repository clone下来
 ## 数据准备
 1. mkdir fakeset 
 
