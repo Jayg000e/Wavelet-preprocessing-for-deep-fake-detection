@@ -1,68 +1,56 @@
 
 # Wavelet-preprocessing-for-deep-fake-detection
 
-本代码基于https://github.com/microsoft/Swin-Transformer 
+This code is based on https://github.com/microsoft/Swin-Transformer and has made the following changes:
 
-主要做了以下几点改动：
+1.The three files data/preprocess.py, preprocess_real.sh, and preprocess_fake.sh use discrete wavelet transform to preprocess face data and generate corresponding wavelet components.
 
-1.data/preprocess.py preprocess_real.sh preprocess_fake.sh三个文件利用离散小波变换预处理人脸数据， 生成对应的小波分量
+2.If the wavelet component is selected to be added to the input channel, there will be a total of 21 input channels instead of 3 (see the report for details). Therefore, there are corresponding changes in the command line input and processing in main_face.py and config.py.
 
-2.如果选取小波分量加入输入通道，那么共会有21个输入通道而不是3个（详见报告），因此在main_face.py和config.py中对命令行输入和处理有
-相应改动
+3.All data augmentation operations have been abandoned because I believe that the data augmentation methods for classification tasks are not conducive to face training (see the report for details). Therefore, many transform operations have been removed in data/build.py, and the data IO in data/build.py has been rewritten to facilitate the input of face data.
 
-3.舍弃了一切数据增强操作，因为我认为分类任务的数据增强方式不利于人脸的训练（详见报告），因此data/build.py中去除了很多
-transform操作，同时改写了data/build.py中其中的数据IO，以便输入人脸数据
+4.The train.sh script and train_wavelet.sh script are used to train with and without wavelet components, respectively.
 
-4.train.sh脚本和train_wavelet.sh脚本分别用于训练利用小波分量和不利用小波分量训练
+## Performance
 
-## 模型表现
+We only used 10,000 real faces and 10,000 fake faces for training, and tested on 60,000 real faces and 60,000 fake faces using the pre-trained model of swin_transformer swin-T 224x224. The following results can be achieved within 25 epochs:
 
-我们仅采用10000个真实人脸和10000个虚假人脸进行训练，在60000个真实人脸和60000个虚假人脸上进行测试，使用swin_transformer
-的预训练模型swin-T 224x224,以下结果在25个epoch以内都能达到
+1.Without using wavelet components, the accuracy is 99.520%, and the AUC is 99.987%.
 
-1.不使用小波分量的情况下准确率为99.520%，AUC为99.987%
-
-2.在使用小波分量的情况下准确率为99.828%,AUC为99.998%
+2.When using wavelet components, the accuracy is 99.828%, and the AUC is 99.998%.
 
 ## clone apex
 
-进入wavelet_faceformer文件夹将apex repository clone下来
-## 数据准备
+Enter the wavelet_faceformer folder and clone the apex repository. 
 
-1. mkdir fakeset 
+## data preparation
 
-2. 按照https://github.com/NVlabs/stylegan2
- 中的指示配置环境，生成70000张虚假人脸
-其中seeds选项改为0-69999，图片保存在fakeset/generated_image文件夹中，这大概需要一天， 
-   取决于你使用的GPU
-   
-3.按照https://github.com/NVlabs/stylegan2 
-中的指示下载FFHQ数据集中images1024x1024文件夹，对应
-fakeset/images1024x1024文件夹
+To generate fake faces and wavelet components, you can follow these steps:
 
-4.运行preprocess_real.sh,preprocess_fake.sh文件生成小波分量,这个过程大概需要一天，取决于你用的CPU
+1.Create a fakeset folder by running mkdir fakeset.
 
+2.Follow the instructions on https://github.com/NVlabs/stylegan2 to set up the environment and generate 70,000 fake faces. Change the seeds option to 0-69999, and save the images in the fakeset/generated_image folder. This process may take about a day, depending on the GPU you are using.
 
-5.在进行上面几步后，你的fakeset文件夹下面应当有下面几个文件夹，每个文件夹都应当包含70000个数据文件
+3.Follow the instructions on https://github.com/NVlabs/stylegan2 to download the images1024x1024 folder from the FFHQ dataset, corresponding to the fakeset/images1024x1024 folder.
+
+4.Run the preprocess_real.sh and preprocess_fake.sh files to generate wavelet components. This process may take about a day, depending on the CPU you are using.
+
+5.After completing the above steps, your fakeset folder should contain several subfolders, each containing 70,000 data files.
 
 
-## 开始训练和评估
+## Training and evaluation
 
-1.按照https://github.com/microsoft/Swin-Transformer
-中的提示配置环境，本代码还需要安装很少的几个包，运行时如果报告
-环境缺失补充安装即可。（注意要和上述生成图片的环境完全隔离开）。代码在CUDA10.2 python3.7环境下能够成功运行，其他环境不作保证。
+To start training and evaluation, you can follow these steps:
 
-2.按照https://github.com/microsoft/Swin-Transformer
-中的提示下载imagenet预训练的
-swin_tiny_patch4_window7_224.pth文件
+1.Follow the instructions on https://github.com/microsoft/Swin-Transformer to set up the environment. This code also requires the installation of a few additional packages. If there are any missing environment dependencies reported during runtime, you can supplement the installation. (Note that the environment should be completely isolated from the environment used to generate images above). The code can run successfully in a CUDA10.2 python3.7 environment, but other environments are not guaranteed.
 
-3，运行train.sh或train_wavelet.sh文件，取决于你是否想利用小波分量，如果你使用这两个文件进行了至少1个epoch的训练，但中间因为某些原因中断了
-训练，只需要把脚本中的--swin_pretrained选项删除，然后继续运行这两个脚本即可。如果你所想使用的gpu数量不是脚本中的4个，把脚本中gpu数量作相应修改即可
+2.Follow the instructions on https://github.com/microsoft/Swin-Transformer to download the swin_tiny_patch4_window7_224.pth file pre-trained on ImageNet.
 
-## 训练所需时间
+3.Run the train.sh or train_wavelet.sh file, depending on whether you want to use wavelet components. If you have trained for at least 1 epoch using these two files but interrupted the training for some reason, just delete the --swin_pretrained option in the script and continue running these two scripts. If the number of GPUs you want to use is not 4 as specified in the script, you can make corresponding changes to the number of GPUs in the script.
 
-由于我们仅仅使用20000张图像进行训练，且训练25个epoch以内，因此在4张2080ti的计算资源下，一天以内可以训练完，但由于测试使用120000张图像，
-训练加测试的时间在4卡情况为1个星期以内
+## Training Time
+
+Since we only use 20,000 images for training and train within 25 epochs, it can be completed within one day with the computing resources of 4 2080ti GPUs. However, since the test uses 120,000 images, the time for training and testing is within one week under the condition of 4 GPUs.
 
 
 
